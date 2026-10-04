@@ -43,7 +43,7 @@ Sous la Forêt renversée, le peuple des Mycéliums entend les souvenirs circule
 
 | Lieu | Règle en partie | Ce que l’on raconte |
 |---|---|---|
-| **Les Trois Brisants** | Le premier serviteur que chaque camp pose ici à son tour gagne +1 Attaque. | Des îlots flottants, des cordages tendus au-dessus d’une mer turquoise et des récifs-jardins. |
+| **Les Trois Brisants** | Le premier serviteur joué depuis la main de chaque camp ici à son tour gagne +1 Attaque. | Des îlots flottants, des cordages tendus au-dessus d’une mer turquoise et des récifs-jardins. |
 | **La Forêt renversée** | À la première mort d’un de tes serviteurs ici à ton tour, ton héros récupère 1 PV. | Des arbres suspendus, racines au ciel, où des lanternes-fruits éclairent les souvenirs perdus. |
 | **Le Phare sans côte** | Le premier sort que chaque camp lance ici à son tour coûte 1 Élan de moins, minimum 1. | Un phare de cuivre dérive dans un ciel marin; les baleines-nuages apparaissent quand on oublie une route. |
 
@@ -78,8 +78,8 @@ Une pioche dans un paquet vide inflige 1 dégât de fatigue, puis 2 au prochain 
 ### Précisions de résolution
 
 - L’effet du Phare s’applique au premier sort du tour lancé pour une cible ou un lieu au Phare. Son coût ne descend jamais sous 1.
-- Aux Trois Brisants, une invocation par camp et par tour reçoit le bonus; les Spores invoquées par un effet ne consomment pas cette première invocation.
-- À la Forêt renversée, seul le premier serviteur d’un camp qui meurt dans la Forêt à son tour soigne son héros.
+- Aux Trois Brisants, seul le premier serviteur joué depuis la main par camp et par tour reçoit le bonus. Les Spores invoquées par un effet ne le reçoivent pas et ne consomment pas ce bonus.
+- À la Forêt renversée, seul le premier serviteur d’un camp qui meurt dans la Forêt pendant le tour de son propriétaire soigne son héros.
 - Les PV supplémentaires augmentent les PV maximums et actuels. Un soin ne dépasse jamais les PV maximums du héros ou du serviteur.
 - Si une cible manque après une attaque ou un effet, les autres étapes de résolution continuent normalement.
 
@@ -117,7 +117,7 @@ Chaque carte ci-dessous existe en deux exemplaires dans le paquet de sa famille.
 | Passeuse des Brisants | 2 | 2/2 | À l’arrivée : déplace l’allié le plus fragile vers le premier autre lieu qui a une place. |
 | Danseuse de ressac | 3 | 3/3 | Après son attaque, peut rejoindre un autre lieu libre. |
 | Sirène des trois baies | 4 | 3/4 | À l’arrivée : renvoie le serviteur ennemi de plus faible valeur Attaque+PV dans la main de son propriétaire. |
-| Albatros du détour | 5 | 4/5 | À l’arrivée : ton prochain serviteur joué dans un autre lieu ce tour gagne +1 Attaque. |
+| Albatros du détour | 5 | 4/5 | À l’arrivée : ton prochain serviteur joué depuis ta main dans un autre lieu ce tour gagne +1 Attaque. Les jetons ne consomment pas ce bonus. |
 | Courant inverse | 2 | Sort | Déplace un serviteur choisi vers un autre lieu libre. |
 
 ### Cour des Mycéliums
