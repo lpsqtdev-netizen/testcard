@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#23433f">
+  <meta name="description" content="Choisis ta famille, compose ton paquet et défie un rival dans Les Cartographes du Voile.">
+  <title>Les Cartographes du Voile</title>
+  <link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+  <div id="homeScreen" class="screen home-screen">
+    <header class="home-header">
+      <a class="brand" href="#accueil" aria-label="Les Cartographes du Voile, accueil">
+        <span class="brand-seal">⌖</span><span><small>LE GRAND ATLAS DES SOUVENIRS</small><strong>Les Cartographes<br class="mobile-break"> du Voile</strong></span>
+      </a>
+      <div class="home-header-actions"><button class="soft-button" id="loreButton" type="button">Le monde</button><button class="soft-button" id="rulesButton" type="button">Les règles</button></div>
+    </header>
+    <main class="home-layout">
+      <section class="welcome-panel">
+        <p class="overline">✦ Le Déluge muet a effacé les frontières ✦</p>
+        <h1>Le monde tient<br><em>à un fil.</em></h1>
+        <p class="welcome-copy">Dans un atlas qui dérive, quatre familles se disputent les souvenirs du monde. Choisis la tienne, pose tes cartes et change le cours de la bataille.</p>
+        <div class="welcome-actions"><button class="gold-button" id="startButton" type="button">Entrer dans l’atlas <span>➜</span></button><button class="text-button" id="collectionButton" type="button">Feuilleter les 24 cartes <span>↗</span></button></div>
+        <div class="features"><span><b>20</b> PV par héros</span><i></i><span><b>4</b> familles</span><i></i><span><b>24</b> cartes originales</span></div>
+      </section>
+      <section class="faction-picker" aria-labelledby="familyTitle">
+        <div class="section-heading"><div><p class="overline">CHOISIS TON HISTOIRE</p><h2 id="familyTitle">Une famille. Une façon de lutter.</h2></div><span class="counter">01 — 04</span></div>
+        <div class="faction-grid" id="factionGrid"></div>
+        <div class="pick-footer"><span id="factionSummary">Sélectionne un portrait pour découvrir son pouvoir.</span><span class="ready-mark" id="readyMark">CHOISIS UNE FAMILLE</span></div>
+      </section>
+    </main>
+    <footer class="home-footer"><span>Un jeu original de stratégie et de mémoire</span><span>UNE AVENTURE DANS L’ATLAS · VERSION 1.0</span></footer>
+  </div>
+
+  <div id="gameScreen" class="screen game-screen hidden">
+    <header class="game-header">
+      <button id="homeButton" class="home-button" type="button" aria-label="Retour à l’accueil">⌂</button>
+      <div class="match-title"><span class="brand-seal tiny">⌖</span><span><small>LES CARTOGRAPHES DU VOILE</small><strong id="matchHeading">DUEL DE L’ATLAS</strong></span></div>
+      <div class="turn-ribbon" id="turnRibbon">VOTRE TOUR · 1</div>
+      <button id="gameRulesButton" class="soft-button" type="button">Aide</button>
+    </header>
+    <main class="game-layout">
+      <section class="opponent-strip" aria-label="Héros adverse">
+        <div class="hero-side enemy-side">
+          <div class="hero-portrait-wrap"><img id="enemyPortrait" src="assets/hero-cendres.jpg" alt="Portrait de la famille adverse"><span class="hero-level">II</span></div>
+          <div class="hero-name-block"><small>RIVAL · <span id="enemyFactionTitle">ARCHIVISTE</span></small><strong id="enemyFactionName">Archivistes des Cendres</strong><span class="hero-motto" id="enemyMotto">Toute histoire laisse une braise.</span></div>
+          <button id="enemyHero" class="health-medallion enemy-health" type="button" aria-label="Cibler le héros adverse"><span id="enemyHp">20</span><small>PV</small></button>
+        </div>
+        <div class="resource-block"><span class="resource-label">ÉLAN</span><div id="enemyMana" class="crystals" aria-label="Élan adverse"></div><small id="enemyDeckCount">Paquet 12</small></div>
+      </section>
+
+      <section id="battlefield" class="battlefield" aria-label="Champ de bataille illustré">
+        <div class="opponent-board-row" id="enemyBoard" aria-label="Serviteurs ennemis"></div>
+        <div class="locations-row" id="locationsRow" aria-label="Trois lieux disputés"></div>
+        <div class="player-board-row" id="playerBoard" aria-label="Vos serviteurs"></div>
+        <div class="battle-caption" id="battleCaption">LE VENT SE LÈVE SUR LES TROIS BRISANTS</div>
+      </section>
+
+      <section class="player-controls" aria-label="Votre héros et commandes">
+        <div class="hero-side player-side">
+          <div class="hero-portrait-wrap"><img id="playerPortrait" src="assets/hero-veilleurs.jpg" alt="Portrait de votre famille"><span class="hero-level">I</span></div>
+          <div class="hero-name-block"><small>TON HÉROS · <span id="playerFactionTitle">VEILLEUR</span></small><strong id="playerFactionName">Veilleurs du Fil</strong><span class="hero-motto" id="playerMotto">Rien ne se perd tant qu’on le relie.</span></div>
+          <div class="health-medallion player-health"><span id="playerHp">20</span><small>PV</small></div>
+        </div>
+        <div class="resource-block player-resource"><span class="resource-label">ÉLAN</span><div id="playerMana" class="crystals" aria-label="Votre Élan"></div><small id="playerDeckCount">Paquet 12 · Main 4</small></div>
+        <button id="heroPowerButton" class="power-button" type="button"><span class="power-icon" id="powerIcon">✧</span><span><small>POUVOIR · 2 ÉLAN</small><strong id="powerName">Point de couture</strong></span></button>
+        <button id="endTurnButton" class="turn-button" type="button"><span>Terminer<br>le tour</span><b>➜</b></button>
+      </section>
+
+      <section class="hand-area" aria-label="Votre main">
+        <div class="hand-heading"><div><p class="overline">TES CARTES · <span id="handCount">4</span></p><p class="action-hint-line"><span id="actionHint" class="action-hint">Joue une carte ou attaque un rival dans le même lieu.</span><button id="cancelAction" class="tiny-action cancel-action hidden" type="button">Annuler l’action</button></p></div><div class="hand-actions"><button id="concedeButton" class="tiny-action" type="button">Abandonner</button><span class="deck-stack" aria-hidden="true">▤</span></div></div>
+        <div class="hand-row" id="handRow"></div>
+      </section>
+      <aside class="game-log" id="gameLog" aria-live="polite"><span class="log-star">✦</span><span id="logText">La page s’ouvre. Que ton histoire commence.</span></aside>
+    </main>
+  </div>
+
+  <div id="overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="overlayTitle">
+    <div class="modal-shell"><button id="closeOverlay" class="modal-close" type="button" aria-label="Fermer">×</button><div class="modal-emblem">⌖</div><p class="overline" id="overlayKicker">LE GRAND ATLAS</p><h2 id="overlayTitle">Les règles du duel</h2><div id="overlayContent" class="modal-content"></div><div id="overlayActions" class="modal-actions"></div></div>
+  </div>
+  <script src="src/data.js"></script>
+  <script src="src/game.js"></script>
+</body>
+</html>
+
