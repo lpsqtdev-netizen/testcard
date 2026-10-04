@@ -48,9 +48,11 @@ La direction relaie les décisions qui affectent plusieurs rôles. Les agents si
 
 ## Définition de fini du vertical slice
 
-- Le joueur peut comprendre le but, jouer ses cartes et finir une partie contre le bot.
-- Le contrôle des lieux est lisible et la Confluence donne un résultat déterministe.
-- Les cartes, lieux et textes sont originaux et lisibles en français.
-- Les commandes principales fonctionnent à la souris et au clavier.
-- Les limites connues et la prochaine tranche sont documentées.
+- Le joueur peut choisir une famille, comprendre l’objectif et terminer un duel contre l’IA par victoire, défaite ou match nul.
+- L’IA joue uniquement des cartes et pouvoirs légaux qu’elle peut payer, puis exécute ses attaques et rend la main.
+- Les règles visibles, le Codex et les textes des 24 cartes décrivent les effets réellement appliqués par le moteur.
+- Les cibles et lieux disponibles sont mis en évidence; une action en attente peut être annulée avant paiement.
+- Les cartes, familles, personnages, lieux et illustrations sont propres au projet et lisibles en français.
+- Les scénarios de démarrage, combat, fin de partie et revanche sont parcourus en revue QA avant une version publique.
+- Les limites connues — dont l’équilibrage sans playtest prolongé — et la prochaine tranche sont documentées.
 
