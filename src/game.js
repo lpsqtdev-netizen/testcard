@@ -168,7 +168,11 @@
 
   function canSummon(ownerId, lane, amount = 1) {
     const p = side(ownerId);
-    return boardCount(ownerId) + amount <= 7 && p.board[lane].length + amount <= 3;
+    return Number.isInteger(lane) && !!p.board[lane] && boardCount(ownerId) + amount <= 7 && p.board[lane].length + amount <= 3;
+  }
+
+  function canMoveTo(unit, lane) {
+    return !!unit && lane !== unit.lane && side(unit.owner).board[lane].length < 3;
   }
 
   function summonSpore(ownerId, lane) {
@@ -245,7 +249,7 @@
       case 'moveAlly':
         if (friendly.length) {
           const mover = weakestFriendly;
-          const destination = locations.map((_, i) => i).find((i) => i !== mover.lane && canSummon(ownerId, i));
+          const destination = locations.map((_, i) => i).find((i) => canMoveTo(mover, i));
           if (destination !== undefined) moveUnit(mover, destination);
         }
         break;
@@ -261,7 +265,7 @@
 
   function moveUnit(unit, destination) {
     const p = side(unit.owner);
-    if (destination === unit.lane || !canSummon(unit.owner, destination)) return false;
+    if (!canMoveTo(unit, destination)) return false;
     const oldLane = unit.lane;
     p.board[oldLane] = p.board[oldLane].filter((candidate) => candidate.instanceId !== unit.instanceId);
     unit.lane = destination;
@@ -285,7 +289,7 @@
     const lane = unit.lane;
     owner.board[lane] = owner.board[lane].filter((candidate) => candidate.instanceId !== unit.instanceId);
     owner.deathsThisTurn += 1;
-    if (lane === 1 && !owner.forestHealUsed[lane]) {
+    if (game.active === owner.id && lane === 1 && !owner.forestHealUsed[lane]) {
       owner.forestHealUsed[lane] = true;
       healHero(owner.id, 1);
     }
@@ -329,7 +333,7 @@
     if (game.pending?.kind === 'moveDestination') {
       const pending = game.pending;
       const unit = unitById(pending.unitId);
-      if (!unit || !canSummon(unit.owner, lane) || lane === unit.lane) { log('Choisis un autre lieu où il reste une place.', 'warn'); return; }
+      if (!canMoveTo(unit, lane)) { log('Choisis un autre lieu où il reste une place.', 'warn'); return; }
       if (pending.cardId) {
         const p = side('player');
         const card = cardByInstance('player', pending.cardId);
@@ -349,7 +353,7 @@
     }
     if (game.pending?.kind === 'drift') {
       const unit = unitById(game.pending.unitId);
-      if (!unit || !canSummon(unit.owner, lane) || lane === unit.lane) { log('Choisis un autre lieu libre pour la Danseuse.', 'warn'); return; }
+      if (!canMoveTo(unit, lane)) { log('Choisis un autre lieu libre pour la Danseuse.', 'warn'); return; }
       moveUnit(unit, lane);
       game.pending = null;
       log(`La Danseuse de ressac glisse jusqu’aux ${laneLabel(lane)}.`);
@@ -607,6 +611,10 @@
     })[0];
   }
 
+  function aiProtectTarget() {
+    return side('enemy').board.flat().slice().sort((a, b) => (a.hp / a.maxHp) - (b.hp / b.maxHp) || b.attack - a.attack)[0];
+  }
+
   function aiPlayCard(card) {
     const p = side('enemy');
     if (card.type === 'Serviteur') {
@@ -617,7 +625,7 @@
       const unit = addUnit('enemy', card, lane);
       if (!unit) return false;
       resolveBattlecry('enemy', unit, card, lane);
-      log(`Les Archivistes jouent ${card.name} aux ${laneLabel(lane)}.`);
+      log(`Les ${p.faction.short} jouent ${card.name} aux ${laneLabel(lane)}.`);
       return true;
     }
     if (card.effect === 'deal3') {
@@ -625,6 +633,10 @@
         || side('player').board.flat().sort((a, b) => a.hp - b.hp || b.attack - a.attack)[0];
       if (!target) return false;
       return aiCastTarget(card, target);
+    }
+    if (card.effect === 'protectAlly') {
+      const target = aiProtectTarget();
+      return target ? aiCastTarget(card, target) : false;
     }
     if (card.effect === 'spawnTwoSpell') {
       const lane = aiPickLane('enemy');
@@ -636,13 +648,13 @@
       p.spellDiscountUsed[lane] = true;
       p.graveyard.push(removeCardFromHand(p, card.instanceId));
       summonSpore('enemy', lane); summonSpore('enemy', lane);
-      log(`Les Mycéliums lancent ${card.name} aux ${laneLabel(lane)}.`);
+      log(`Les ${p.faction.short} lancent ${card.name} aux ${laneLabel(lane)}.`);
       return true;
     }
     if (card.effect === 'moveAny') {
-      const mover = side('enemy').board.flat().filter((u) => canSummon('enemy', (u.lane + 1) % 3)).sort((a, b) => b.hp - a.hp)[0];
+      const mover = side('enemy').board.flat().filter((u) => locations.some((_, i) => canMoveTo(u, i))).sort((a, b) => b.hp - a.hp)[0];
       if (!mover) return false;
-      const lane = locations.map((_, i) => i).find((i) => i !== mover.lane && canSummon('enemy', i));
+      const lane = locations.map((_, i) => i).find((i) => canMoveTo(mover, i));
       if (lane === undefined) return false;
       const current = p.spellDiscountUsed[mover.lane];
       const cost = current ? card.cost : Math.max(1, card.cost - 1);
@@ -650,7 +662,7 @@
       p.mana -= cost; p.spellDiscountUsed[mover.lane] = true;
       p.graveyard.push(removeCardFromHand(p, card.instanceId));
       moveUnit(mover, lane);
-      log(`Les Passeurs jouent ${card.name} : ${mover.name} change de lieu.`);
+      log(`Les ${p.faction.short} jouent ${card.name} : ${mover.name} change de lieu.`);
       return true;
     }
     return false;
@@ -664,7 +676,13 @@
     p.mana -= cost;
     p.spellDiscountUsed[lane] = true;
     p.graveyard.push(removeCardFromHand(p, card.instanceId));
-    if (card.effect === 'deal3') { target.hp -= 3; removeDead(target); log(`Les Archivistes lancent ${card.name} sur ${target.name}.`); }
+    if (card.effect === 'deal3') { target.hp -= 3; removeDead(target); log(`Les ${p.faction.short} lancent ${card.name} sur ${target.name}.`); }
+    else if (card.effect === 'protectAlly') {
+      target.maxHp += 3;
+      target.hp = Math.min(target.maxHp, target.hp + 3);
+      target.tempGuardUntil = p.turns + 1;
+      log(`Les ${p.faction.short} protègent ${target.name} avec ${card.name}.`);
+    }
     return true;
   }
 
@@ -685,9 +703,9 @@
       const lane = aiPickLane('enemy'); if (lane === undefined) return;
       p.mana -= 2; p.heroPowerUsed = true; summonSpore('enemy', lane);
     } else if (effect === 'moveAlly') {
-      const mover = p.board.flat().find((u) => locations.some((_, i) => i !== u.lane && canSummon('enemy', i)));
+      const mover = p.board.flat().find((u) => locations.some((_, i) => canMoveTo(u, i)));
       if (!mover) return;
-      const lane = locations.map((_, i) => i).find((i) => i !== mover.lane && canSummon('enemy', i));
+      const lane = locations.map((_, i) => i).find((i) => canMoveTo(mover, i));
       if (lane === undefined) return;
       p.mana -= 2; p.heroPowerUsed = true; moveUnit(mover, lane);
     }
@@ -724,11 +742,34 @@
     aiUsePower();
     let actions = 0;
     while (!game.done && actions < 8) {
-      const affordable = side('enemy').hand.filter((card) => {
-        if (card.type === 'Serviteur' && (boardCount('enemy') >= 7 || !locations.some((_, i) => canSummon('enemy', i)))) return false;
-        return card.cost <= side('enemy').mana || (card.type === 'Sort' && Math.max(1, card.cost - 1) <= side('enemy').mana);
+      const p = side('enemy');
+      const affordable = p.hand.filter((card) => {
+        if (card.type === 'Serviteur') {
+          const lane = aiPickLane('enemy');
+          return lane !== undefined && canSummon('enemy', lane) && p.mana >= card.cost;
+        }
+        let lane;
+        if (card.effect === 'deal3') {
+          const target = side('player').board.flat().filter((u) => u.hp <= 3).sort((a, b) => a.hp - b.hp || b.attack - a.attack)[0]
+            || side('player').board.flat().sort((a, b) => a.hp - b.hp || b.attack - a.attack)[0];
+          if (!target) return false;
+          lane = target.lane;
+        } else if (card.effect === 'protectAlly') {
+          const target = aiProtectTarget();
+          if (!target) return false;
+          lane = target.lane;
+        } else if (card.effect === 'spawnTwoSpell') {
+          lane = aiPickLane('enemy');
+          if (lane === undefined) return false;
+        } else if (card.effect === 'moveAny') {
+          const mover = p.board.flat().filter((u) => locations.some((_, i) => canMoveTo(u, i))).sort((a, b) => b.hp - a.hp)[0];
+          if (!mover) return false;
+          lane = mover.lane;
+        } else return false;
+        const cost = p.spellDiscountUsed[lane] ? card.cost : Math.max(1, card.cost - 1);
+        return p.mana >= cost;
       }).sort((a, b) => b.cost - a.cost || (a.type === 'Serviteur' ? -1 : 1));
-      const play = affordable.find((card) => card.type === 'Serviteur' ? canSummon('enemy', aiPickLane('enemy')) : card.effect === 'deal3' ? side('player').board.flat().length > 0 : card.effect === 'spawnTwoSpell' ? locations.some((_, i) => canSummon('enemy', i)) : card.effect === 'moveAny' ? side('enemy').board.flat().some((u) => locations.some((_, i) => i !== u.lane && canSummon('enemy', i))) : false);
+      const play = affordable[0];
       if (!play || !aiPlayCard(play)) break;
       actions += 1;
     }
@@ -749,7 +790,7 @@
     game.busy = true;
     game.active = 'enemy';
     render();
-    log('Les Archivistes déploient leur prochain souvenir…');
+    log('Le rival déploie son prochain souvenir…');
     const serial = game.serial;
     aiTimer = setTimeout(() => {
       if (!game || game.serial !== serial || game.done) return;
@@ -870,7 +911,8 @@
     const row = $('locationsRow');
     row.innerHTML = locations.map((location, lane) => {
       const chosen = game.pending?.kind === 'powerLane' || game.selection?.kind === 'minion' || game.selection?.kind === 'spellLane' || game.pending?.kind === 'moveDestination' || game.pending?.kind === 'drift';
-      const targetLane = chosen && canSummon('player', lane) && !(game.pending?.kind === 'moveDestination' && unitById(game.pending.unitId)?.lane === lane) && !(game.pending?.kind === 'drift' && unitById(game.pending.unitId)?.lane === lane);
+      const movingUnit = (game.pending?.kind === 'moveDestination' || game.pending?.kind === 'drift') ? unitById(game.pending.unitId) : null;
+      const targetLane = chosen && (movingUnit ? canMoveTo(movingUnit, lane) : canSummon('player', lane));
       const playerGuard = unitsAt('player', lane).some(isGuarded);
       const enemyGuard = unitsAt('enemy', lane).some(isGuarded);
       return `<button class="location-card ${targetLane ? 'lane-target' : ''}" type="button" data-location="${lane}" aria-label="${location.name}. ${location.rule}">
@@ -955,7 +997,7 @@
     showOverlay('COMMENT JOUER', 'Les règles du duel', `
       <h3>Ton but</h3><p>Fais tomber le héros adverse à <strong>0 PV</strong>. Chaque héros commence à 20 PV. À la fatigue, la première pioche manquée inflige 1 dégât, puis 2, puis 3…</p>
       <h3>À ton tour</h3><ul><li>Ton Élan maximum augmente de 1 (jusqu’à 7), puis se recharge complètement. Tu pioches une carte.</li><li>Joue tes cartes et attaque dans l’ordre que tu veux. Termine ton tour pour laisser jouer le rival.</li><li>Les serviteurs ont Attaque et PV. Ils arrivent épuisés et ne peuvent attaquer qu’à ton prochain tour. Une attaque contre un serviteur inflige des dégâts simultanément.</li><li>Tu peux utiliser ton pouvoir une fois par tour pour 2 Élan. Les serviteurs Garde bloquent les attaques du héros dans leur lieu.</li></ul>
-      <h3>L’atlas compte aussi</h3><ul><li><strong>Trois Brisants :</strong> le premier serviteur que chaque camp y pose à son tour gagne +1 Attaque.</li><li><strong>Forêt renversée :</strong> la première mort d’un de tes serviteurs ici à ton tour soigne ton héros de 1.</li><li><strong>Phare sans côte :</strong> ton premier sort lancé ici à ton tour coûte 1 Élan de moins (minimum 1).</li><li>Sept serviteurs maximum par camp; trois par lieu. Ta main peut contenir dix cartes.</li></ul>
+      <h3>L’atlas compte aussi</h3><ul><li><strong>Trois Brisants :</strong> le premier serviteur joué depuis la main par chaque camp ici à son tour gagne +1 Attaque; les Spores n’activent pas ce bonus.</li><li><strong>Forêt renversée :</strong> la première mort d’un de tes serviteurs ici pendant ton tour soigne ton héros de 1.</li><li><strong>Phare sans côte :</strong> ton premier sort lancé ici à ton tour coûte 1 Élan de moins (minimum 1).</li><li>Sept serviteurs maximum par camp; trois par lieu. Ta main peut contenir dix cartes.</li></ul>
       <h3>Le paquet de famille</h3><p>Chaque famille possède six cartes uniques, en deux exemplaires chacune. Les pouvoirs et les cartes ont des effets déterministes : les victoires viennent du placement, des échanges et du bon moment pour jouer.</p>`, [{ label: 'Compris', primary: true, run: closeOverlay }]);
   }
 
