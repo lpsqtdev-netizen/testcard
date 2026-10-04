@@ -31,7 +31,7 @@
   ];
 
   const locations = [
-    { id: 'brisants', name: 'Les Trois Brisants', epithet: 'Les îles qu’on s’échange', icon: '⌁', artPosition: '17% 58%', rule: 'Le premier serviteur que tu poses ici à ton tour gagne +1 Attaque.', detail: 'Les cordages se retendent d’île en île au rythme de la marée.' },
+    { id: 'brisants', name: 'Les Trois Brisants', epithet: 'Les îles qu’on s’échange', icon: '⌁', artPosition: '17% 58%', rule: 'Le premier serviteur joué ici depuis ta main à ton tour gagne +1 Attaque.', detail: 'Les cordages se retendent d’île en île au rythme de la marée.' },
     { id: 'foret', name: 'La Forêt renversée', epithet: 'Les racines dans le ciel', icon: '♧', artPosition: '51% 38%', rule: 'À la première mort d’un de tes serviteurs ici à ton tour, soigne ton héros de 1.', detail: 'Ses lanternes-fruits éclairent les souvenirs qui n’ont pas encore trouvé leur nom.' },
     { id: 'phare', name: 'Le Phare sans côte', epithet: 'Une lumière à la dérive', icon: '✧', artPosition: '83% 57%', rule: 'Ton premier sort lancé ici à chaque tour coûte 1 Élan de moins (minimum 1).', detail: 'Il guide les navires vers une côte qui n’apparaît que dans les cartes.' }
   ];
@@ -55,14 +55,14 @@
     { id: 'passeuse-brisants', faction: 'marees', name: 'Passeuse des Brisants', cost: 2, type: 'Serviteur', attack: 2, health: 2, artFocus: 'a ferry captain carrying a tiny boat', text: 'À l’arrivée : déplace un autre allié vers un lieu libre.', effect: 'moveAlly' },
     { id: 'danseuse-ressac', faction: 'marees', name: 'Danseuse de ressac', cost: 3, type: 'Serviteur', attack: 3, health: 3, artFocus: 'a nimble dancer skipping over a wave', text: 'Après son attaque : tu peux la déplacer.', effect: 'drift' },
     { id: 'sirene-baies', faction: 'marees', name: 'Sirène des trois baies', cost: 4, type: 'Serviteur', attack: 3, health: 4, artFocus: 'a bright-eyed siren with a shell whistle', text: 'À l’arrivée : renvoie le plus faible serviteur ennemi dans sa main.', effect: 'bounceEnemy' },
-    { id: 'albatros-detour', faction: 'marees', name: 'Albatros du détour', cost: 5, type: 'Serviteur', attack: 4, health: 5, artFocus: 'a proud albatross with a route map ribbon', text: 'À l’arrivée : ton prochain allié posé ailleurs ce tour gagne +1 Attaque.', effect: 'laneBuff' },
+    { id: 'albatros-detour', faction: 'marees', name: 'Albatros du détour', cost: 5, type: 'Serviteur', attack: 4, health: 5, artFocus: 'a proud albatross with a route map ribbon', text: 'À l’arrivée : ton prochain serviteur joué depuis ta main dans un autre lieu ce tour gagne +1 Attaque.', effect: 'laneBuff' },
     { id: 'courant-inverse', faction: 'marees', name: 'Courant inverse', cost: 2, type: 'Sort', artFocus: 'a blue current carrying a tiny boat across a map', text: 'Déplace un serviteur vers un autre lieu.', effect: 'moveAny', target: 'any' },
 
     { id: 'sporeveille', faction: 'myceles', name: 'Sporeveille', cost: 1, type: 'Serviteur', attack: 1, health: 2, artFocus: 'a sleepy little mushroom spirit', text: 'À sa mort : fait naître une Spore 1/1 ici.', effect: 'sporeOnDeath' },
     { id: 'bergeron-racines', faction: 'myceles', name: 'Bergeron des racines', cost: 2, type: 'Serviteur', attack: 2, health: 2, artFocus: 'a smiling mushroom gardener with a twig staff', text: 'À l’arrivée : invoque une Spore 1/1 ici.', effect: 'spawnOne' },
     { id: 'garde-talus', faction: 'myceles', name: 'Garde-talus', cost: 3, type: 'Serviteur', attack: 2, health: 5, guard: true, artFocus: 'a squat mossy guardian with a bark shield', text: 'Garde — protège ton héros dans son lieu.', effect: 'plain' },
     { id: 'bete-lisiere', faction: 'myceles', name: 'Bête de lisière', cost: 4, type: 'Serviteur', attack: 4, health: 4, artFocus: 'a curious antlered forest beast', text: 'Si un allié est mort ce tour : gagne +2/+2.', effect: 'mossGrowth' },
-    { id: 'matriarche-mousses', faction: 'myceles', name: 'Matriarche des mousses', cost: 6, type: 'Serviteur', attack: 4, health: 7, artFocus: 'a warm giant mushroom mother with little spores', text: 'À l’arrivée : invoque deux Spores 1/1 ici.', effect: 'spawnTwo' },
+    { id: 'matriarche-mousses', faction: 'myceles', name: 'Matriarche des mousses', cost: 6, type: 'Serviteur', attack: 4, health: 7, artFocus: 'a warm giant mushroom mother with little spores', text: 'À l’arrivée : invoque jusqu’à deux Spores 1/1 ici.', effect: 'spawnTwo' },
     { id: 'floraison-captive', faction: 'myceles', name: 'Floraison captive', cost: 3, type: 'Sort', artFocus: 'two glowing spores opening in a forest', text: 'Invoque deux Spores 1/1 dans le lieu choisi.', effect: 'spawnTwoSpell' }
   ];
 
