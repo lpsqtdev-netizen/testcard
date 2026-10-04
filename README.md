@@ -1,24 +1,38 @@
 # Les Cartographes du Voile
 
-Prototype navigateur d’un duel de cartes tactique dans un atlas vivant. Deux cartographes rivaux réécrivent les lieux d’un archipel fait de souvenirs.
+**Un jeu de cartes fantastique, solo, contre l’Archiviste.** Les îles de l’atlas bougent sous les coups des quatre familles. Choisis ton clan, protège ton héros et fais tomber les 20 PV du rival.
 
 ## Jouer
 
-Ouvrir `index.html` dans un navigateur récent. Aucun serveur, compte ou dépendance n’est nécessaire. Choisissez une carte, puis un lieu pour la jouer. Cliquez sur **Terminer le tour** pour laisser agir l’adversaire. Le premier à contrôler deux lieux lors d’une Confluence remporte la partie.
+Ouvre `index.html` dans un navigateur récent. Le jeu fonctionne sans installation ni compte. Choisis une famille, puis clique sur **Entrer dans l’atlas**. Le bouton **Feuilleter les 24 cartes** montre le catalogue complet; **Le monde** présente son histoire et les clans.
 
-## Le prototype
+## Ce que contient la version
 
-- Trois lieux partagés, chacun avec une règle propre.
-- Une main de cartes, une ressource d’Élan qui augmente à chaque tour et un adversaire automatisé.
-- Unités, manœuvres et événements de lieu.
-- Score de contrôle visible, journal de partie et relance.
-- Interface en français, dessin original en CSS/SVG; aucun asset externe.
+- Un duel complet contre une IA qui joue à son tour, invoque, lance ses sorts et attaque.
+- Quatre familles jouables, chacune avec un pouvoir et six cartes uniques; le paquet contient deux copies de chaque carte.
+- 24 cartes illustrées, trois lieux avec effets de jeu, serviteurs, sorts, Garde, Ruée, soins, déplacements et essaims.
+- 20 PV, Élan qui monte jusqu’à 7, limite de plateau, main de 10 cartes, fatigue progressive, victoire, défaite et abandon.
+- Codex, règles visibles en jeu, reprise immédiate de partie et interface adaptée au mobile.
+- Illustrations originales enregistrées dans `assets/`; aucun asset d’une franchise commerciale.
 
-## Équipe studio (agents locaux)
+## Dossiers
 
-Voir [docs/studio.md](docs/studio.md) pour les rôles, responsabilités, points de contrôle et format de transmission.
+- `index.html` — menus et structure de l’interface.
+- `src/data.js` — familles, lieux et catalogue de cartes.
+- `src/game.js` — règles du duel, IA et interactions.
+- `src/style.css` — plateau, cartes et interface.
+- `assets/` — atlas peint, portraits de clans et planches d’illustrations des cartes.
+- `docs/regles-et-univers.md` — bible de jeu détaillée, règles et catalogue.
+- `docs/studio.md` — organisation des rôles et transmission des livrables.
 
-## Vision et règles
+## Contrôles
 
-Voir [docs/vision.md](docs/vision.md). Le jeu reprend des principes généraux du genre (cartes lisibles, factions, décisions de tempo) sans reprendre personnages, univers, textes, iconographie ou présentation de jeux existants.
+- Clique une carte, puis un lieu ou une cible lorsque le jeu le demande.
+- Clique un de tes serviteurs prêt, puis un rival dans le même lieu ou le héros adverse.
+- Le bouton **Annuler l’action** annule une sélection avant que l’Élan soit dépensé.
+- Clique **Terminer le tour** pour laisser agir l’Archiviste.
+
+## Direction créative
+
+Le projet s’inspire de la chaleur des illustrations peintes, des silhouettes expressives et de la lecture rapide des cartes du genre. Ses familles, personnages, récits, noms, scènes, règles et cadres lui sont propres. Aucune carte, icône, illustration ou mise en page de Hearthstone ou Magic n’est reprise.
 
