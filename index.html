@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111827"><title>Localia — Jeu de cartes</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar"><div><span class="eyebrow">LOCALIA</span><h1>Le jeu de cartes local</h1></div><button id="reset" class="ghost">Nouvelle partie</button></header>
+<main>
+<section class="status"><div><span>Tour</span><strong id="turn">—</strong></div><div><span>Manche</span><strong id="round">1</strong></div><div><span>Pioche</span><strong id="deck-count">0</strong></div><div><span>Défausse</span><strong id="discard-count">0</strong></div></section>
+<section class="game">
+<aside class="panel"><h2>Joueurs</h2><div id="players"></div></aside>
+<section class="table"><div class="opponent" id="opponent"></div><div class="center"><div id="message" class="message">Préparation…</div><div id="discard" class="card-slot"></div></div><div class="hand-wrap"><h2>Votre main</h2><div id="hand" class="hand"></div></div><div class="actions"><button id="draw">Piocher</button><button id="end" class="primary" disabled>Terminer le tour</button></div></section>
+</section>
+</main>
+<script src="game.js"></script>
+</body></html>
