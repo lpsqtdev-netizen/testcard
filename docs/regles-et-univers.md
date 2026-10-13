@@ -53,7 +53,8 @@ Sous la Forêt renversée, le peuple des Mycéliums entend les souvenirs circule
 
 - Le joueur choisit une famille; le rival utilise la famille suivante dans l’ordre du Codex.
 - Chaque paquet contient deux copies des six cartes de cette famille, soit 12 cartes.
-- Les deux héros commencent à **20 PV**. Chaque joueur reçoit trois cartes; le joueur commence et pioche une carte au début de son premier tour.
+- Les deux héros commencent à **20 PV**. Chaque joueur reçoit trois cartes. Avant le premier tour, le joueur peut échanger autant de cartes de départ qu’il le souhaite : il pioche les remplacements avant que les cartes écartées retournent dans le paquet, puis mélange. L’IA renouvelle automatiquement les cartes coûtant 4 Élan ou plus.
+- Le joueur commence ensuite son premier tour et pioche une carte comme à chaque début de tour; le mulligan ne dépense pas d’Élan et ne déclenche aucune pioche supplémentaire.
 - Les paquets sont mélangés; aucun effet de carte ne dépend du hasard.
 
 ### Un tour
