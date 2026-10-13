@@ -27,6 +27,7 @@ Ouvre `index.html` dans un navigateur récent. Le jeu fonctionne sans installati
 
 ## Contrôles
 
+- Au lancement du duel, clique les cartes de départ que tu veux échanger, puis valide ta main.
 - Clique une carte, puis un lieu ou une cible lorsque le jeu le demande.
 - Clique un de tes serviteurs prêt, puis un rival dans le même lieu ou le héros adverse.
 - Le bouton **Annuler l’action** annule une sélection avant que l’Élan soit dépensé.
