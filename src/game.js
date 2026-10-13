@@ -34,6 +34,17 @@
     return items;
   }
 
+  function replaceStartingCards(p, selectedIds) {
+    const selected = new Set(selectedIds);
+    const rejected = p.hand.filter((card) => selected.has(card.instanceId));
+    if (!rejected.length) return 0;
+    p.hand = p.hand.filter((card) => !selected.has(card.instanceId));
+    p.hand.push(...p.deck.splice(0, rejected.length));
+    p.deck.push(...rejected);
+    shuffle(p.deck);
+    return rejected.length;
+  }
+
   function makePlayer(id, factionId) {
     const faction = factionFor(factionId);
     const deck = shuffle(cards.filter((card) => card.faction === factionId).flatMap((card) => [makeCardInstance(card, id), makeCardInstance(card, id)]));
@@ -49,19 +60,20 @@
     gameSerial += 1;
     const enemyFaction = factions[(factions.findIndex((f) => f.id === factionId) + 1) % factions.length];
     game = {
-      serial: gameSerial, active: 'player', turnNumber: 0, done: false, busy: false,
+      serial: gameSerial, active: 'player', turnNumber: 0, done: false, busy: false, phase: 'mulligan', mulliganSelected: [],
       selection: null, pending: null,
       players: { player: makePlayer('player', factionId), enemy: makePlayer('enemy', enemyFaction.id) }
     };
     game.players.player.hand = game.players.player.deck.splice(0, 3);
     game.players.enemy.hand = game.players.enemy.deck.splice(0, 3);
+    replaceStartingCards(game.players.enemy, game.players.enemy.hand.filter((card) => card.cost >= 4).map((card) => card.instanceId));
     $('homeScreen').classList.add('hidden');
     $('gameScreen').classList.remove('hidden');
     $('matchHeading').textContent = 'DUEL DE L’ATLAS';
     updateFactionLabels();
-    startTurn('player');
     render();
-    log(`La ${game.players.player.faction.name} ouvre le relevé face aux ${game.players.enemy.faction.name}.`);
+    showMulligan();
+    log('Choisis les cartes de départ que tu souhaites remplacer.');
   }
 
   function startTurn(id) {
@@ -325,7 +337,7 @@
   }
 
   function isPlayerAction() {
-    return game && !game.done && !game.busy && game.active === 'player';
+    return game && game.phase === 'playing' && !game.done && !game.busy && game.active === 'player';
   }
 
   function laneClick(lane) {
@@ -945,8 +957,9 @@
     const hint = $('actionHint');
     const end = $('endTurnButton');
     const power = $('heroPowerButton');
-    const isActive = game.active === 'player' && !game.busy && !game.done;
-    if (!game.selection && !game.pending) hint.textContent = 'Joue une carte ou attaque un rival dans le même lieu.';
+    const isActive = game.active === 'player' && game.phase === 'playing' && !game.busy && !game.done;
+    if (game.phase === 'mulligan') hint.textContent = 'Choisis les cartes de départ à remplacer avant le premier tour.';
+    else if (!game.selection && !game.pending) hint.textContent = 'Joue une carte ou attaque un rival dans le même lieu.';
     if (game.selection?.kind === 'minion') hint.textContent = 'Choisis un lieu où ton serviteur peut prendre place.';
     if (game.selection?.kind === 'spellLane') hint.textContent = 'Choisis le lieu où lancer ton sort.';
     if (game.selection?.kind === 'spellTarget') hint.textContent = 'Choisis la cible indiquée par la carte.';
@@ -959,8 +972,8 @@
     end.disabled = !isActive || !!game.pending;
     end.querySelector('span').innerHTML = isActive ? 'Terminer<br>le tour' : game.done ? 'Partie<br>finie' : 'Rival<br>réfléchit';
     power.disabled = !isActive || game.players.player.heroPowerUsed || game.players.player.mana < 2 || !!game.pending;
-    $('turnRibbon').textContent = game.done ? 'PARTIE TERMINÉE' : game.active === 'player' ? `VOTRE TOUR · ${side('player').turns}` : 'TOUR DU RIVAL';
-    $('battleCaption').textContent = game.active === 'player' ? 'POSE TES CARTES · DÉFENDS TES SOUVENIRS' : 'LES PAGES SE TOURNENT…';
+    $('turnRibbon').textContent = game.done ? 'PARTIE TERMINÉE' : game.phase === 'mulligan' ? 'CHOIX DE DÉPART' : game.active === 'player' ? `VOTRE TOUR · ${side('player').turns}` : 'TOUR DU RIVAL';
+    $('battleCaption').textContent = game.phase === 'mulligan' ? 'PRÉPARE TA MAIN DE DÉPART' : game.active === 'player' ? 'POSE TES CARTES · DÉFENDS TES SOUVENIRS' : 'LES PAGES SE TOURNENT…';
   }
 
   function render() {
@@ -990,12 +1003,43 @@
   }
 
   function closeOverlay() {
+    if (game?.phase === 'mulligan') return;
     $('overlay').classList.add('hidden');
+  }
+
+  function showMulligan() {
+    const p = side('player');
+    const selected = new Set(game.mulliganSelected);
+    const cardsHtml = p.hand.map((card) => {
+      const isSelected = selected.has(card.instanceId);
+      const stats = card.type === 'Serviteur' ? ` · ${card.attack}/${card.health}` : '';
+      return `<button class="mulligan-card ${isSelected ? 'selected' : ''}" type="button" data-mulligan-card="${card.instanceId}" aria-pressed="${isSelected}"><span class="mulligan-cost">${card.cost} ÉLAN</span><strong>${card.name}</strong><small>${card.type}${stats}</small><span class="mulligan-status">${isSelected ? 'À REMPLACER' : 'GARDER'}</span></button>`;
+    }).join('');
+    const count = game.mulliganSelected.length;
+    showOverlay('AVANT LE PREMIER TOUR', 'Choisis ta main de départ', `<p>Tu peux garder ces cartes ou en sélectionner pour les échanger. Les remplacements sont piochés avant que les cartes écartées retournent dans le paquet.</p><div class="mulligan-cards">${cardsHtml}</div><p class="mulligan-note">L’IA renouvelle automatiquement les cartes qui coûtent 4 Élan ou plus.</p>`, [{ label: count ? `Remplacer ${count} carte${count > 1 ? 's' : ''}` : 'Garder ma main', primary: true, run: confirmMulligan }]);
+    $('closeOverlay').classList.add('hidden');
+    $('overlayContent').querySelectorAll('[data-mulligan-card]').forEach((button) => button.addEventListener('click', () => {
+      const id = button.dataset.mulliganCard;
+      game.mulliganSelected = selected.has(id) ? game.mulliganSelected.filter((item) => item !== id) : [...game.mulliganSelected, id];
+      showMulligan();
+    }));
+  }
+
+  function confirmMulligan() {
+    if (!game || game.phase !== 'mulligan') return;
+    const replaced = replaceStartingCards(side('player'), game.mulliganSelected);
+    game.mulliganSelected = [];
+    game.phase = 'playing';
+    closeOverlay();
+    startTurn('player');
+    render();
+    log(replaced ? `Tu échanges ${replaced} carte${replaced > 1 ? 's' : ''}. Ton premier tour commence avec ${side('player').mana} Élan.` : `Tu gardes ta main. Ton premier tour commence avec ${side('player').mana} Élan.`);
   }
 
   function showRules() {
     showOverlay('COMMENT JOUER', 'Les règles du duel', `
       <h3>Ton but</h3><p>Fais tomber le héros adverse à <strong>0 PV</strong>. Chaque héros commence à 20 PV. À la fatigue, la première pioche manquée inflige 1 dégât, puis 2, puis 3…</p>
+      <h3>Ta main de départ</h3><p>Avant le premier tour, tu peux sélectionner autant de cartes que tu veux pour les échanger. Les nouvelles cartes arrivent avant le retour des cartes écartées dans le paquet. L’IA renouvelle automatiquement ses cartes à 4 Élan ou plus.</p>
       <h3>À ton tour</h3><ul><li>Ton Élan maximum augmente de 1 (jusqu’à 7), puis se recharge complètement. Tu pioches une carte.</li><li>Joue tes cartes et attaque dans l’ordre que tu veux. Termine ton tour pour laisser jouer le rival.</li><li>Les serviteurs ont Attaque et PV. Ils arrivent épuisés et ne peuvent attaquer qu’à ton prochain tour. Une attaque contre un serviteur inflige des dégâts simultanément.</li><li>Tu peux utiliser ton pouvoir une fois par tour pour 2 Élan. Les serviteurs Garde bloquent les attaques du héros dans leur lieu.</li></ul>
       <h3>L’atlas compte aussi</h3><ul><li><strong>Trois Brisants :</strong> le premier serviteur joué depuis la main par chaque camp ici à son tour gagne +1 Attaque; les Spores n’activent pas ce bonus.</li><li><strong>Forêt renversée :</strong> la première mort d’un de tes serviteurs ici pendant ton tour soigne ton héros de 1.</li><li><strong>Phare sans côte :</strong> ton premier sort lancé ici à ton tour coûte 1 Élan de moins (minimum 1).</li><li>Sept serviteurs maximum par camp; trois par lieu. Ta main peut contenir dix cartes.</li></ul>
       <h3>Le paquet de famille</h3><p>Chaque famille possède six cartes uniques, en deux exemplaires chacune. Les pouvoirs et les cartes ont des effets déterministes : les victoires viennent du placement, des échanges et du bon moment pour jouer.</p>`, [{ label: 'Compris', primary: true, run: closeOverlay }]);
@@ -1046,7 +1090,7 @@
     $('rulesButton').addEventListener('click', showRules);
     $('gameRulesButton').addEventListener('click', showRules);
     $('closeOverlay').addEventListener('click', closeOverlay);
-    $('overlay').addEventListener('click', (event) => { if (event.target === $('overlay') && !game?.done) closeOverlay(); });
+    $('overlay').addEventListener('click', (event) => { if (event.target === $('overlay') && !game?.done && game?.phase !== 'mulligan') closeOverlay(); });
     $('endTurnButton').addEventListener('click', endTurn);
     $('cancelAction').addEventListener('click', () => {
       if (!isPlayerAction()) return;
