@@ -67,8 +67,8 @@
   ];
 
   const artFiles = {
-    veilleurs: 'assets/cards-veilleurs.jpg', cendres: 'assets/cards-cendres.jpg',
-    marees: 'assets/cards-marees.jpg', myceles: 'assets/cards-myceles.jpg'
+    veilleurs: 'assets/cards-veilleurs.png', cendres: 'assets/cards-cendres.png',
+    marees: 'assets/cards-marees.png', myceles: 'assets/cards-myceles.png'
   };
   const artCounts = Object.fromEntries(factions.map((faction) => [faction.id, 0]));
   cards.forEach((card) => {
