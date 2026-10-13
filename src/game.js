@@ -752,6 +752,9 @@
     startTurn('enemy');
     if (game.done) return;
     aiUsePower();
+    // Resolve existing attacks before playing cards so deaths can unlock battlecries this turn.
+    aiAttack();
+    if (game.done) return;
     let actions = 0;
     while (!game.done && actions < 8) {
       const p = side('enemy');
