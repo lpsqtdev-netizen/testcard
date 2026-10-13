@@ -287,7 +287,7 @@
 
   function bounceUnit(unit) {
     const owner = side(unit.owner);
-    if (owner.hand.length < 10) {
+    if (!unit.token && owner.hand.length < 10) {
       const template = cards.find((card) => card.id === unit.cardId);
       if (template) owner.hand.push(makeCardInstance(template, owner.id));
       else owner.hand.push(makeCardInstance({ id: unit.cardId, name: unit.name, faction: unit.faction, cost: 1, type: 'Serviteur', attack: unit.attack, health: unit.maxHp, effect: 'plain' }, owner.id));
@@ -550,7 +550,7 @@
     removeDead(defender);
     removeDead(attacker);
     game.selection = null;
-    if (attacker.effect === 'drift' && unitById(attacker.instanceId) && locations.some((_, i) => i !== attacker.lane && canSummon('player', i))) {
+    if (attacker.effect === 'drift' && unitById(attacker.instanceId) && locations.some((_, i) => canMoveTo(attacker, i))) {
       game.pending = { kind: 'drift', unitId: attacker.instanceId };
       log(`${attacker.name} a frappé. Choisis le courant qui l’emportera.`);
     } else log(`${attacker.name} et ${defender.name} s’affrontent aux ${laneLabel(attacker.lane)}.`);
@@ -569,7 +569,7 @@
     const damage = attacker.attack;
     damageHero('enemy', damage, attacker.name);
     game.selection = null;
-    if (attacker.effect === 'drift' && unitById(attacker.instanceId) && locations.some((_, i) => i !== attacker.lane && canSummon('player', i))) {
+    if (attacker.effect === 'drift' && unitById(attacker.instanceId) && locations.some((_, i) => canMoveTo(attacker, i))) {
       game.pending = { kind: 'drift', unitId: attacker.instanceId };
       log(`${attacker.name} frappe le héros adverse. Choisis sa nouvelle route.`);
     } else log(`${attacker.name} frappe le héros adverse pour ${damage} dégâts.`);
