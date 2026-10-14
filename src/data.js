@@ -76,7 +76,7 @@
     card.cardArt = artFiles[card.faction];
     const column = card.artIndex % 3;
     const row = Math.floor(card.artIndex / 3);
-    card.artPosition = `${column * 50}% ${row * 100}%`;
+    card.artPosition = `${column * 50}% ${row ? 80 : 20}%`;
   });
 
   window.AtlasData = { factions, locations, cards };
