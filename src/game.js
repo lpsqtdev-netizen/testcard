@@ -402,7 +402,7 @@
     const weakestHere = p.board[lane].filter((other) => other.instanceId !== unit.instanceId).sort((a, b) => a.hp - b.hp)[0];
     switch (card.effect) {
       case 'healAllyHere':
-        if (weakestHere) { weakestHere.hp = Math.min(weakestHere.maxHp + 1, weakestHere.hp + 1); weakestHere.maxHp += 1; }
+        if (weakestHere) { queueUnitFloat(weakestHere, '+1 PV', 'healing'); weakestHere.hp = Math.min(weakestHere.maxHp + 1, weakestHere.hp + 1); weakestHere.maxHp += 1; }
         break;
       case 'healHero':
         healHero(ownerId, 3);
@@ -421,7 +421,7 @@
       case 'spawnOne': summonSpore(ownerId, lane); break;
       case 'spawnTwo': summonSpore(ownerId, lane); summonSpore(ownerId, lane); break;
       case 'mossGrowth':
-        if (p.deathsThisTurn > 0) { unit.attack += 2; unit.hp += 2; unit.maxHp += 2; }
+        if (p.deathsThisTurn > 0) { queueUnitFloat(unit, '+2 / +2', 'healing'); unit.attack += 2; unit.hp += 2; unit.maxHp += 2; }
         break;
       case 'moveAlly':
         if (friendly.length) {
@@ -473,7 +473,7 @@
       owner.forestHealUsed[lane] = true;
       healHero(owner.id, 1);
     }
-    owner.board.flat().filter((ally) => ally.effect === 'deathGain' && ally.instanceId !== unit.instanceId).forEach((ally) => { ally.attack += 1; });
+    owner.board.flat().filter((ally) => ally.effect === 'deathGain' && ally.instanceId !== unit.instanceId).forEach((ally) => { queueUnitFloat(ally, '+1 ATQ', 'healing'); ally.attack += 1; });
     if (unit.effect === 'sporeOnDeath' && canSummon(owner.id, lane)) summonSpore(owner.id, lane);
     owner.graveyard.push({ id: unit.cardId, name: unit.name });
   }
@@ -902,6 +902,7 @@
     } else if (effect === 'healAlly') {
       const target = p.board.flat().filter((u) => u.hp < u.maxHp + 2).sort((a, b) => (a.hp / a.maxHp) - (b.hp / b.maxHp))[0];
       if (!target) return;
+      queueUnitFloat(target, '+2 PV', 'healing');
       p.mana -= 2; p.heroPowerUsed = true; target.maxHp += 2; target.hp = Math.min(target.maxHp, target.hp + 2);
     } else if (effect === 'summonSpore') {
       const lane = aiPickLane('enemy'); if (lane === undefined) return;
