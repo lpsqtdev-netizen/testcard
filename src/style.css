@@ -129,3 +129,46 @@
   .power-button strong{font-size:8px}
   .turn-button{min-width:86px}
 }
+
+/* Larger, readable home screen and faction picker */
+.home-header{height:78px}
+.brand strong{font-size:22px}
+.brand small{font-size:9px}
+.home-header-actions{gap:12px}
+.soft-button{font-size:12px;padding:10px 14px}
+.welcome-panel .overline{font-size:11px}
+.welcome-panel h1{font-size:clamp(54px,5vw,78px)}
+.welcome-copy{font-size:15px;line-height:1.6}
+.welcome-actions{gap:12px}
+.gold-button,.text-button{font-size:13px;padding:12px 17px}
+.features{gap:12px;font-size:10px}
+.features b{font-size:16px}
+.faction-picker{padding:21px}
+.section-heading h2{font-size:24px}
+.faction-grid{gap:12px}
+.faction-card{min-height:210px}
+.faction-card img{height:120px}
+.faction-card-copy{padding:11px 12px}
+.faction-card-copy h3{font-size:16px;min-height:0}
+.faction-card-copy p{font-size:11px;line-height:1.4;min-height:3em}
+.pick-footer{font-size:12px}
+@media(max-width:720px){
+  .home-header{height:72px}
+  .brand strong{font-size:18px}
+  .brand small{font-size:7px}
+  .home-header-actions{gap:6px}
+  .soft-button{font-size:10px;padding:8px 10px}
+  .welcome-panel h1{font-size:54px}
+  .welcome-copy{font-size:14px}
+  .gold-button,.text-button{font-size:12px;padding:11px 14px}
+  .features{font-size:9px}
+  .faction-picker{padding:15px}
+  .section-heading h2{font-size:20px}
+  .faction-grid{gap:9px}
+  .faction-card{min-height:174px}
+  .faction-card img{height:100px}
+  .faction-card-copy{padding:8px}
+  .faction-card-copy h3{font-size:14px}
+  .faction-card-copy p{font-size:10px;min-height:0}
+  .pick-footer{font-size:10px}
+}
