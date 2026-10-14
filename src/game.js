@@ -10,6 +10,10 @@
   let collectionFilter = 'all';
 
   const factionFor = (id) => factions.find((f) => f.id === id);
+  const spriteImage = (card, className) => {
+    const index = Number.isInteger(card.artIndex) ? card.artIndex : 0;
+    return `<img class="${className}" src="${card.cardArt}" alt="" loading="lazy" decoding="async" style="--sprite-col:${index % 3};--sprite-row:${Math.floor(index / 3)}">`;
+  };
   const side = (id = game?.active) => game.players[id];
   const otherId = (id) => id === 'player' ? 'enemy' : 'player';
   const unitById = (id) => game?.players.player.board.flat().concat(game?.players.enemy.board.flat()).find((u) => u.instanceId === id);
@@ -158,6 +162,7 @@
       owner: ownerId, cardId: template.id, name: template.name, faction: template.faction || p.faction.id,
       artFocus: template.artFocus || 'a tiny glowing forest spore',
       art: template.cardArt || template.art || factionFor(template.faction || p.faction.id).art,
+      artIndex: template.artIndex ?? 0,
       artPosition: template.artPosition || '50% 0%',
       attack: template.attack ?? 1, hp: template.health ?? 1, maxHp: template.health ?? 1,
       guard: !!template.guard, rush: !!template.rush, effect: template.effect || 'plain', lane,
@@ -188,7 +193,7 @@
   }
 
   function summonSpore(ownerId, lane) {
-    return addUnit(ownerId, { id: 'spore-token', name: 'Spore', faction: 'myceles', attack: 1, health: 1, effect: 'plain', artFocus: 'a tiny smiling mushroom spirit', cardArt: 'assets/cards-myceles.jpg', artPosition: '0% 0%' }, lane, { token: true });
+    return addUnit(ownerId, { id: 'spore-token', name: 'Spore', faction: 'myceles', attack: 1, health: 1, effect: 'plain', artFocus: 'a tiny smiling mushroom spirit', cardArt: 'assets/cards-myceles.png', artIndex: 0, artPosition: '0% 0%' }, lane, { token: true });
   }
 
   function removeCardFromHand(p, cardId) {
@@ -885,7 +890,7 @@
     const faction = factionFor(unit.faction);
     const classes = ['unit-piece', unit.owner === 'enemy' ? 'enemy-piece' : '', selected ? 'selected-attacker' : '', target ? 'target-valid' : '', !ready && unit.owner === 'player' ? 'sleepy' : ''].filter(Boolean).join(' ');
     return `<button class="${classes}" type="button" data-unit="${unit.instanceId}" aria-label="${unit.name}, ${unit.attack} Attaque, ${unit.hp} PV${isGuarded(unit) ? ', Garde' : ''}">
-      <span class="unit-image" style="--unit-art:url('${unit.art || faction.art}');--unit-pos:${unit.artPosition || '50% 0%'}"></span><span class="unit-title">${unit.name}</span><span class="unit-stat attack">${unit.attack}</span><span class="unit-stat hp">${unit.hp}</span>
+      <span class="unit-image">${spriteImage({ cardArt: unit.art || faction.art, artIndex: unit.artIndex }, 'unit-sprite')}</span><span class="unit-title">${unit.name}</span><span class="unit-stat attack">${unit.attack}</span><span class="unit-stat hp">${unit.hp}</span>
       ${isGuarded(unit) ? '<span class="keyword-badge">GARDE</span>' : unit.rush ? '<span class="keyword-badge">RUÉE</span>' : ready ? '<span class="keyword-badge">PRÊT</span>' : ''}
     </button>`;
   }
@@ -950,7 +955,7 @@
         : p.mana >= card.cost;
       const stats = card.type === 'Serviteur' ? `<span class="card-stat attack">${card.attack}</span><span class="card-stat health">${card.health}</span>` : '';
       return `<button class="game-card ${card.type === 'Sort' ? 'spell' : ''} ${selected ? 'selected' : ''} ${canAfford ? 'affordable' : ''}" type="button" data-card="${card.instanceId}" style="--faction:${faction.color};--accent:${faction.accent};--card-image:url('${card.cardArt}');--card-position:${card.artPosition}" aria-label="${card.name}, coût ${card.cost}, ${card.text}">
-        <span class="card-art"><span class="card-cost">${card.cost}</span><span class="card-ribbon">${card.type}</span></span><span class="card-name">${card.name}</span><span class="card-text">${card.text}</span><span class="card-bottom">${faction.short}</span>${stats}
+        <span class="card-art">${spriteImage(card, 'card-sprite')}<span class="card-cost">${card.cost}</span><span class="card-ribbon">${card.type}</span></span><span class="card-name">${card.name}</span><span class="card-text">${card.text}</span><span class="card-bottom">${faction.short}</span>${stats}
       </button>`;
     }).join('');
     row.querySelectorAll('[data-card]').forEach((button) => button.addEventListener('click', () => selectCard(button.dataset.card)));
@@ -1061,7 +1066,7 @@
     const catalogue = `<div class="collection-grid">${shown.map((card) => {
       const faction = factionFor(card.faction);
       const stats = card.type === 'Serviteur' ? `<span class="archive-stats">${card.attack} / ${card.health}</span>` : '';
-      return `<article class="archive-card" style="--faction:${faction.color};--archive-art:url('${card.cardArt}');--archive-position:${card.artPosition}"><span class="archive-illustration"></span><span class="archive-cost">${card.cost}</span>${stats}<h4>${card.name}</h4><p>${card.text}</p><p><strong>${faction.short}</strong> · ${card.type}</p></article>`;
+      return `<article class="archive-card" style="--faction:${faction.color};--archive-art:url('${card.cardArt}');--archive-position:${card.artPosition}"><span class="archive-illustration">${spriteImage(card, 'archive-sprite')}</span><span class="archive-cost">${card.cost}</span>${stats}<h4>${card.name}</h4><p>${card.text}</p><p><strong>${faction.short}</strong> · ${card.type}</p></article>`;
     }).join('')}</div>`;
     showOverlay('LE GRIMOIRE', `${shown.length} cartes à découvrir`, `${filterButtons}${catalogue}`, [{ label: 'Fermer le grimoire', primary: true, run: closeOverlay }]);
     $('overlayContent').querySelectorAll('[data-filter]').forEach((button) => button.addEventListener('click', () => showCollection(button.dataset.filter)));
