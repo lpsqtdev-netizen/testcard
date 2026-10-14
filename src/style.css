@@ -172,3 +172,12 @@
   .faction-card-copy p{font-size:10px;min-height:0}
   .pick-footer{font-size:10px}
 }
+
+/* Render each atlas tile as a real image so file URLs work in file:// and hosted builds. */
+.card-art{isolation:isolate}
+.card-art>.card-sprite,.archive-illustration>.archive-sprite,.unit-image>.unit-sprite{position:absolute;display:block;max-width:none;object-fit:fill;pointer-events:none;border:0;border-radius:0}
+.card-art>.card-sprite{z-index:0;width:300%;height:600%;left:calc(var(--sprite-col)*-100%);top:calc(var(--sprite-row)*-300% - 100%)}
+.archive-illustration{position:relative;overflow:hidden}
+.archive-illustration>.archive-sprite{width:300%;height:400%;left:calc(var(--sprite-col)*-100%);top:calc(var(--sprite-row)*-200% - 50%)}
+.unit-image{position:absolute;inset:0;overflow:hidden;border-radius:6px}
+.unit-image>.unit-sprite{width:300%;height:400%;left:calc(var(--sprite-col)*-100%);top:calc(var(--sprite-row)*-200% - 50%)}
