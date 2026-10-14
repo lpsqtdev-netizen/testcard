@@ -15,8 +15,6 @@
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 .action-hint-line{display:flex;align-items:center;gap:7px;margin:2px 0 0}.action-hint{margin:0}.cancel-action{font-size:6px;padding:3px 6px;color:#fde4aa;border-color:#d8b67080}
 .unit-image{position:absolute;inset:0;border-radius:6px;background-image:linear-gradient(180deg,#0000 38%,#15231eb0 100%),var(--unit-art);background-size:100% 100%,300% 200%;background-position:center,var(--unit-pos);background-repeat:no-repeat}.card-art{background-image:linear-gradient(180deg,#0000,#15231eb0),var(--card-image);background-size:100% 100%,300% 200%;background-position:center,var(--card-position);background-repeat:no-repeat}.archive-illustration{display:block;width:100%;height:82px;background-image:linear-gradient(180deg,#0000,#14201945),var(--archive-art);background-size:100% 100%,300% 200%;background-position:center,var(--archive-position);background-repeat:no-repeat}
-
-
 /* Larger, readable card layout and undistorted family sprites */
 .game-screen{height:auto;min-height:100vh;overflow-x:hidden;overflow-y:auto}
 .game-header{height:58px}
@@ -129,7 +127,6 @@
   .power-button strong{font-size:8px}
   .turn-button{min-width:86px}
 }
-
 /* Larger, readable home screen and faction picker */
 .home-header{height:78px}
 .brand strong{font-size:22px}
@@ -181,3 +178,48 @@
 .archive-illustration>.archive-sprite{width:300%;height:400%;left:calc(var(--sprite-col)*-100%);top:calc(var(--sprite-row)*-200% - 50%)}
 .unit-image{position:absolute;inset:0;overflow:hidden;border-radius:6px}
 .unit-image>.unit-sprite{width:300%;height:400%;left:calc(var(--sprite-col)*-100%);top:calc(var(--sprite-row)*-200% - 50%)}
+
+/* Duel effects: expressive feedback that stays attached to the action that caused it. */
+@media(min-width:721px){.game-layout{grid-template-rows:82px minmax(380px,auto) 86px 264px 34px}.hand-row{height:210px;padding-top:22px}}
+@media(max-width:720px){.game-layout{grid-template-rows:72px minmax(560px,auto) 78px 254px 34px}.hand-row{height:210px;padding-top:22px}}
+.hand-row{perspective:1100px}
+.game-card{transform-style:preserve-3d;will-change:transform,filter,box-shadow}
+.game-card:hover:not(:disabled){z-index:8;transform:translateY(-16px) scale(1.1) rotateX(var(--tilt-y,0deg)) rotateY(var(--tilt-x,0deg));transform-origin:center bottom;filter:saturate(1.18) brightness(1.08);box-shadow:0 18px 38px #020906dc,0 0 26px color-mix(in srgb,var(--accent) 76%,transparent)}
+.game-card:before{content:'';position:absolute;inset:-55%;z-index:4;pointer-events:none;opacity:0;background:linear-gradient(115deg,transparent 40%,#fff9 50%,transparent 60%);transform:translateX(-80%) rotate(8deg)}
+.game-card:hover:not(:disabled):before{animation:card-foil-sweep .8s ease-out}
+.game-card.selected{box-shadow:0 0 0 3px #fff5a5,0 0 25px var(--accent),0 14px 26px #030906c9}
+.game-card.card-draw{animation:card-deal-in .78s cubic-bezier(.18,.8,.25,1) both}
+.card-flight-clone{overflow:hidden!important;border-color:#fff0a0!important;box-shadow:0 0 0 2px #fff5b5,0 0 35px #f9d36cff,0 16px 40px #000b!important;transform-origin:center}
+.unit-piece{will-change:transform,filter,box-shadow;transform-style:preserve-3d}
+.unit-piece:hover{z-index:4;transform:translateY(-8px) scale(1.08);filter:brightness(1.16) saturate(1.15);box-shadow:0 0 0 2px #ffe7a1,0 0 24px #ffd875bd,0 9px 16px #111a13}
+.unit-piece.unit-summon{animation:unit-arrive .82s cubic-bezier(.2,.9,.25,1) both}
+.unit-piece.unit-attacking{z-index:6;animation:unit-lunge .62s cubic-bezier(.2,.8,.25,1) both}
+.unit-piece.unit-struck{z-index:5;animation:unit-impact .7s ease-out both}
+.unit-piece.unit-buffed{animation:unit-blessing .72s ease-out both}
+.unit-piece.unit-moved{animation:unit-drift .76s cubic-bezier(.2,.8,.25,1) both}
+.lane-units.lane-burst:before{content:'';position:absolute;z-index:8;left:50%;top:50%;width:46px;height:46px;border:3px solid #fff0a2;border-radius:50%;pointer-events:none;box-shadow:0 0 18px #ffd46c;animation:lane-impact .76s ease-out both}
+.location-card.spell-burst{z-index:3;animation:spell-surge .85s ease-out both}
+.location-card.spell-burst:after{content:'';position:absolute;inset:5%;z-index:4;border:2px solid #fff1a4;border-radius:8px;box-shadow:inset 0 0 28px #a5f6ffab,0 0 25px #ffe17b;pointer-events:none;animation:spell-rune .85s ease-out both}
+.health-medallion.health-hit{animation:hero-damage .76s ease-out both}
+.health-medallion.health-heal,.health-medallion.hero-ready{animation:hero-blessing .9s ease-out both}
+.turn-ribbon.turn-start{animation:turn-arrive .9s cubic-bezier(.2,.8,.25,1) both}
+.combat-float{position:fixed;z-index:10001;pointer-events:none;transform:translate(-50%,0);font:900 clamp(22px,3vw,34px)/1 'Marcellus',Georgia,serif;color:#fff1cb;text-shadow:0 2px 3px #31130f,0 0 12px #ffb456;white-space:nowrap;animation:combat-float-up 1.02s cubic-bezier(.2,.7,.2,1) both}
+.combat-float.damage{color:#ff796b;text-shadow:0 2px 3px #400b10,0 0 18px #ff3027}
+.combat-float.healing{color:#93f5af;text-shadow:0 2px 3px #064827,0 0 18px #39ff93}
+.combat-float.death{font-size:38px;color:#ffe392;text-shadow:0 0 20px #ff9a3b;animation:death-spark 1.02s ease-out both}
+
+@keyframes card-foil-sweep{0%{opacity:0;transform:translateX(-80%) rotate(8deg)}18%{opacity:.9}100%{opacity:0;transform:translateX(80%) rotate(8deg)}}
+@keyframes card-deal-in{0%{opacity:0;transform:translate(110px,-80px) rotateY(85deg) rotateZ(8deg) scale(.35);filter:brightness(2)}55%{opacity:1;transform:translate(-6px,5px) rotateY(-10deg) rotateZ(-2deg) scale(1.08);filter:brightness(1.35)}78%{transform:translate(2px,-2px) rotateZ(1deg) scale(.98)}100%{opacity:1;transform:translate(0,0) rotateY(0) rotateZ(0) scale(1);filter:none}}
+@keyframes unit-arrive{0%{opacity:0;transform:translateY(-85px) scale(.25) rotate(-12deg);filter:brightness(2.4)}55%{opacity:1;transform:translateY(8px) scale(1.22) rotate(4deg);filter:brightness(1.7)}76%{transform:translateY(-4px) scale(.92) rotate(-2deg)}100%{opacity:1;transform:translateY(0) scale(1) rotate(0);filter:none}}
+@keyframes unit-lunge{0%{transform:translateY(0) scale(1)}28%{transform:translateY(var(--attack-first,-24px)) scale(1.18) rotate(-4deg);filter:brightness(1.5)}58%{transform:translateY(var(--attack-back,16px)) scale(.96) rotate(3deg);filter:brightness(1.8)}100%{transform:translateY(0) scale(1) rotate(0);filter:none}}
+@keyframes unit-impact{0%,100%{transform:translateX(0);filter:none}18%{transform:translateX(-9px) rotate(-5deg);filter:brightness(2) sepia(.5)}38%{transform:translateX(8px) rotate(5deg);filter:brightness(1.8) sepia(.5)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+@keyframes unit-blessing{0%{filter:brightness(1)}35%{filter:brightness(1.9) sepia(.4);box-shadow:0 0 24px #71ffac}100%{filter:brightness(1)}}
+@keyframes unit-drift{0%{filter:brightness(1)}35%{filter:brightness(1.8) hue-rotate(35deg);box-shadow:0 0 22px #75e9ff}100%{filter:brightness(1)}}
+@keyframes lane-impact{0%{opacity:.95;transform:translate(-50%,-50%) scale(.18)}70%{opacity:.8}100%{opacity:0;transform:translate(-50%,-50%) scale(2.8)}}
+@keyframes spell-surge{0%,100%{filter:brightness(1)}28%{filter:brightness(1.8) saturate(1.6)}55%{filter:brightness(1.28)}}
+@keyframes spell-rune{0%{opacity:0;transform:scale(.48) rotate(-18deg)}38%{opacity:1;transform:scale(1.06) rotate(5deg)}100%{opacity:0;transform:scale(1.3) rotate(18deg)}}
+@keyframes hero-damage{0%,100%{transform:translateX(0) scale(1);filter:none}20%{transform:translateX(-7px) scale(1.16);filter:brightness(1.75)}40%{transform:translateX(7px) scale(.95);filter:brightness(1.3)}60%{transform:translateX(-4px)}80%{transform:translateX(2px)}}
+@keyframes hero-blessing{0%,100%{filter:none;box-shadow:0 0 0 2px #744428,0 3px 6px #121b17}42%{filter:brightness(1.55);box-shadow:0 0 0 4px #baffc1,0 0 28px #40ff9c}}
+@keyframes turn-arrive{0%{transform:scale(.8) rotate(-4deg);filter:brightness(1)}45%{transform:scale(1.18) rotate(2deg);filter:brightness(1.7);box-shadow:0 0 25px #ffe78b}100%{transform:scale(1) rotate(0);filter:none}}
+@keyframes combat-float-up{0%{opacity:0;transform:translate(-50%,14px) scale(.45) rotate(-7deg)}22%{opacity:1;transform:translate(-50%,-5px) scale(1.2) rotate(2deg)}100%{opacity:0;transform:translate(-50%,-72px) scale(.9) rotate(5deg)}}
+@keyframes death-spark{0%{opacity:0;transform:translate(-50%,20px) scale(.2) rotate(-35deg)}35%{opacity:1;transform:translate(-50%,-10px) scale(1.3) rotate(12deg)}100%{opacity:0;transform:translate(-50%,-76px) scale(.45) rotate(80deg)}}
