@@ -14,6 +14,145 @@
     const index = Number.isInteger(card.artIndex) ? card.artIndex : 0;
     return `<img class="${className}" src="${card.cardArt}" alt="" loading="lazy" decoding="async" style="--sprite-col:${index % 3};--sprite-row:${Math.floor(index / 3)}">`;
   };
+  function snapshotRect(element) {
+    if (!element?.getBoundingClientRect) return null;
+    const { left, top, width, height } = element.getBoundingClientRect();
+    return { left, top, width, height };
+  }
+
+  function unitElement(instanceId) {
+    return Array.from(document.querySelectorAll('[data-unit]')).find((element) => element.dataset.unit === instanceId) || null;
+  }
+
+  function queueUnitFloat(unit, label, tone = 'damage') {
+    if (!game?.visualEvents) return;
+    game.visualEvents.push({ type: 'unitFloat', unitId: unit.instanceId, rect: snapshotRect(unitElement(unit.instanceId)), label, tone });
+  }
+
+  function animateClass(element, className, duration = 760) {
+    if (!element) return;
+    element.classList.remove(className);
+    void element.offsetWidth;
+    element.classList.add(className);
+    window.setTimeout(() => element.classList.remove(className), duration);
+  }
+
+  function showCombatFloat(rect, label, tone = 'damage') {
+    if (!rect) return;
+    const float = document.createElement('span');
+    float.className = `combat-float ${tone}`;
+    float.textContent = label;
+    float.style.left = `${rect.left + rect.width / 2}px`;
+    float.style.top = `${rect.top + rect.height * 0.28}px`;
+    document.body.appendChild(float);
+    window.setTimeout(() => float.remove(), 1050);
+  }
+
+  function animateHealthCounter(ownerId, from, to) {
+    const counter = $(`${ownerId}Hp`);
+    if (!counter) return;
+    if (counter._healthFrame) cancelAnimationFrame(counter._healthFrame);
+    const startedAt = performance.now();
+    const duration = 560;
+    const start = Math.max(0, from);
+    const finish = Math.max(0, to);
+    counter.textContent = String(start);
+    const step = (now) => {
+      const progress = Math.min(1, (now - startedAt) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      counter.textContent = String(Math.round(start + (finish - start) * eased));
+      if (progress < 1) counter._healthFrame = requestAnimationFrame(step);
+      else { counter.textContent = String(finish); counter._healthFrame = 0; }
+    };
+    counter._healthFrame = requestAnimationFrame(step);
+  }
+
+  function animateCardFlight(cardClone, fromRect, toRect) {
+    if (!cardClone || !fromRect || !toRect) return;
+    cardClone.classList.remove('selected');
+    cardClone.classList.add('card-flight-clone');
+    cardClone.removeAttribute('data-card');
+    cardClone.setAttribute('aria-hidden', 'true');
+    Object.assign(cardClone.style, {
+      position: 'fixed', left: `${fromRect.left}px`, top: `${fromRect.top}px`,
+      width: `${fromRect.width}px`, height: `${fromRect.height}px`, margin: '0',
+      zIndex: '10000', pointerEvents: 'none', transform: 'none'
+    });
+    document.body.appendChild(cardClone);
+    const dx = toRect.left + toRect.width / 2 - fromRect.left - fromRect.width / 2;
+    const dy = toRect.top + toRect.height / 2 - fromRect.top - fromRect.height / 2;
+    const scale = Math.min(0.72, toRect.width / fromRect.width, toRect.height / fromRect.height);
+    const flight = cardClone.animate([
+      { transform: 'translate(0,0) scale(1) rotate(0deg)', opacity: 1, filter: 'brightness(1.2)' },
+      { transform: `translate(${dx}px,${dy}px) scale(${scale}) rotate(7deg)`, opacity: 0.08, filter: 'brightness(1.8)' }
+    ], { duration: 640, easing: 'cubic-bezier(.18,.82,.24,1)', fill: 'forwards' });
+    flight.onfinish = () => cardClone.remove();
+  }
+
+  function laneElement(ownerId, lane) {
+    const row = $(ownerId === 'enemy' ? 'enemyBoard' : 'playerBoard');
+    return Array.from(row?.querySelectorAll('[data-lane]') || []).find((element) => Number(element.dataset.lane) === lane) || null;
+  }
+
+  function runVisualEvents() {
+    if (!game?.visualEvents?.length) return;
+    const events = game.visualEvents.splice(0);
+    events.forEach((event, index) => {
+      if (event.type === 'summon') {
+        const unit = unitElement(event.unitId);
+        if (unit) animateClass(unit, 'unit-summon', 820);
+        animateClass(laneElement(event.ownerId, event.lane), 'lane-burst', 780);
+        if (event.cardClone) animateCardFlight(event.cardClone, event.sourceRect, snapshotRect(unit));
+      } else if (event.type === 'draw') {
+        window.setTimeout(() => {
+          const card = Array.from($('handRow').querySelectorAll('[data-card]')).find((element) => element.dataset.card === event.cardId);
+          animateClass(card, 'card-draw', 760);
+        }, event.delay || 0);
+      } else if (event.type === 'turnStart') {
+        animateClass($('turnRibbon'), 'turn-start', 900);
+        const hero = $(event.ownerId === 'enemy' ? 'enemyHp' : 'playerHp')?.closest('.health-medallion');
+        animateClass(hero, 'hero-ready', 900);
+      } else if (event.type === 'clash') {
+        const attacker = unitElement(event.attackerId);
+        const defender = unitElement(event.defenderId);
+        if (attacker) {
+          attacker.style.setProperty('--attack-first', event.attackerOwner === 'enemy' ? '24px' : '-24px');
+          attacker.style.setProperty('--attack-back', event.attackerOwner === 'enemy' ? '-16px' : '16px');
+          animateClass(attacker, 'unit-attacking', 650);
+        }
+        animateClass(defender, 'unit-struck', 720);
+        showCombatFloat(event.defenderRect, `−${event.defenderDamage}`, 'damage');
+        showCombatFloat(event.attackerRect, `−${event.attackerDamage}`, 'damage');
+        animateClass(laneElement(event.attackerOwner, event.lane), 'lane-burst', 780);
+      } else if (event.type === 'heroStrike') {
+        const attacker = unitElement(event.attackerId);
+        if (attacker) {
+          attacker.style.setProperty('--attack-first', event.attackerOwner === 'enemy' ? '24px' : '-24px');
+          attacker.style.setProperty('--attack-back', event.attackerOwner === 'enemy' ? '-16px' : '16px');
+          animateClass(attacker, 'unit-attacking', 650);
+        }
+      } else if (event.type === 'heroDamage' || event.type === 'heroHeal') {
+        const badge = $(`${event.ownerId}Hp`)?.closest('.health-medallion');
+        animateClass(badge, event.type === 'heroDamage' ? 'health-hit' : 'health-heal', 760);
+        animateHealthCounter(event.ownerId, event.from, event.to);
+        showCombatFloat(event.rect, event.type === 'heroDamage' ? `−${event.amount}` : `+${event.amount}`, event.type === 'heroDamage' ? 'damage' : 'healing');
+      } else if (event.type === 'unitFloat') {
+        animateClass(unitElement(event.unitId), event.tone === 'damage' ? 'unit-struck' : 'unit-buffed', 720);
+        showCombatFloat(event.rect, event.label, event.tone);
+      } else if (event.type === 'death') {
+        showCombatFloat(event.rect, '✦', 'death');
+      } else if (event.type === 'spell') {
+        const place = Array.from($('locationsRow').querySelectorAll('[data-location]')).find((element) => Number(element.dataset.location) === event.lane);
+        animateClass(place, 'spell-burst', 850);
+        if (event.cardClone) animateCardFlight(event.cardClone, event.sourceRect, event.targetRect || snapshotRect(place));
+      } else if (event.type === 'move') {
+        const unit = unitElement(event.unitId);
+        animateClass(unit, 'unit-moved', 760);
+        showCombatFloat(snapshotRect(unit) || event.targetRect, '⇢', 'healing');
+        animateClass(laneElement(event.ownerId, event.lane), 'lane-burst', 780);
+      }
+    });
+  }
   const side = (id = game?.active) => game.players[id];
   const otherId = (id) => id === 'player' ? 'enemy' : 'player';
   const unitById = (id) => game?.players.player.board.flat().concat(game?.players.enemy.board.flat()).find((u) => u.instanceId === id);
@@ -65,10 +204,11 @@
     const enemyFaction = factions[(factions.findIndex((f) => f.id === factionId) + 1) % factions.length];
     game = {
       serial: gameSerial, active: 'player', turnNumber: 0, done: false, busy: false, phase: 'mulligan', mulliganSelected: [],
-      selection: null, pending: null,
+      selection: null, pending: null, visualEvents: [],
       players: { player: makePlayer('player', factionId), enemy: makePlayer('enemy', enemyFaction.id) }
     };
     game.players.player.hand = game.players.player.deck.splice(0, 3);
+    game.players.player.hand.forEach((card, index) => game.visualEvents.push({ type: 'draw', cardId: card.instanceId, delay: index * 90 }));
     game.players.enemy.hand = game.players.enemy.deck.splice(0, 3);
     replaceStartingCards(game.players.enemy, game.players.enemy.hand.filter((card) => card.cost >= 4).map((card) => card.instanceId));
     $('homeScreen').classList.add('hidden');
@@ -85,6 +225,7 @@
     game.active = id;
     game.turnNumber += id === 'player' ? 1 : 0;
     const p = side(id);
+    game.visualEvents.push({ type: 'turnStart', ownerId: id });
     p.turns += 1;
     p.maxMana = Math.min(7, p.maxMana + 1);
     p.mana = p.maxMana;
@@ -122,20 +263,31 @@
       damageHero(p.id, p.fatigue, 'la fatigue');
       return;
     }
-    p.hand.push(p.deck.shift());
+    const card = p.deck.shift();
+    p.hand.push(card);
+    if (p.id === 'player') game.visualEvents.push({ type: 'draw', cardId: card.instanceId });
   }
 
   function healHero(id, amount) {
     const p = side(id);
     const before = p.hp;
     p.hp = Math.min(20, p.hp + amount);
-    return p.hp - before;
+    const healed = p.hp - before;
+    if (healed > 0 && game?.visualEvents) {
+      const badge = $(`${id}Hp`)?.closest('.health-medallion');
+      game.visualEvents.push({ type: 'heroHeal', ownerId: id, from: before, to: p.hp, amount: healed, rect: snapshotRect(badge) });
+    }
+    return healed;
   }
 
   function damageHero(id, amount, source = 'une attaque') {
     if (!game || game.done) return;
     const p = side(id);
+    const before = p.hp;
+    const badge = $(`${id}Hp`)?.closest('.health-medallion');
     p.hp -= amount;
+    const actualDamage = Math.max(0, Math.min(before, amount));
+    if (actualDamage > 0) game.visualEvents.push({ type: 'heroDamage', ownerId: id, from: before, to: p.hp, amount: actualDamage, rect: snapshotRect(badge) });
     checkVictory(source);
   }
 
@@ -180,6 +332,7 @@
       if (ownerId === 'player') log(`${unit.name} suit le détour de l’Albatros (+1 Attaque).`);
     }
     p.board[lane].push(unit);
+    game.visualEvents?.push({ type: 'summon', unitId: unit.instanceId, ownerId, lane });
     return unit;
   }
 
@@ -225,10 +378,17 @@
       log(`Il te faut ${card.cost} Élan pour jouer ${card.name}.`, 'warn');
       return false;
     }
+    const sourceCard = ownerId === 'player'
+      ? Array.from($('handRow').querySelectorAll('[data-card]')).find((element) => element.dataset.card === cardId)
+      : null;
+    const cardClone = sourceCard?.cloneNode(true) || null;
+    const sourceRect = snapshotRect(sourceCard);
     p.mana -= card.cost;
     const played = removeCardFromHand(p, cardId);
     const unit = addUnit(ownerId, played, lane);
     if (!unit) return false;
+    const summonEvent = game.visualEvents[game.visualEvents.length - 1];
+    if (summonEvent?.unitId === unit.instanceId) Object.assign(summonEvent, { cardClone, sourceRect });
     resolveBattlecry(ownerId, unit, card, lane);
     if (ownerId === 'player') log(`${card.name} rejoint l’atlas aux ${laneLabel(lane)}.`);
     return true;
@@ -248,14 +408,14 @@
         healHero(ownerId, 3);
         break;
       case 'teamHealth':
-        friendly.forEach((ally) => { ally.maxHp += 1; ally.hp += 1; });
+        friendly.forEach((ally) => { queueUnitFloat(ally, '+1 PV', 'healing'); ally.maxHp += 1; ally.hp += 1; });
         break;
       case 'deathPing':
         if (p.deathsThisTurn > 0) damageHero(enemy.id, 2, card.name);
         break;
       case 'pingEnemy': {
         const target = enemy.board.flat().sort((a, b) => a.hp - b.hp || a.attack - b.attack)[0];
-        if (target) { target.hp -= 1; removeDead(target); }
+        if (target) { queueUnitFloat(target, '−1', 'damage'); target.hp -= 1; removeDead(target); }
         break;
       }
       case 'spawnOne': summonSpore(ownerId, lane); break;
@@ -283,10 +443,12 @@
   function moveUnit(unit, destination) {
     const p = side(unit.owner);
     if (!canMoveTo(unit, destination)) return false;
+    const sourceRect = snapshotRect(unitElement(unit.instanceId));
     const oldLane = unit.lane;
     p.board[oldLane] = p.board[oldLane].filter((candidate) => candidate.instanceId !== unit.instanceId);
     unit.lane = destination;
     p.board[destination].push(unit);
+    game.visualEvents.push({ type: 'move', unitId: unit.instanceId, ownerId: unit.owner, lane: destination, sourceRect });
     return true;
   }
 
@@ -304,6 +466,7 @@
     if (!game || game.done || unit.hp > 0) return;
     const owner = side(unit.owner);
     const lane = unit.lane;
+    game.visualEvents.push({ type: 'death', rect: snapshotRect(unitElement(unit.instanceId)) });
     owner.board[lane] = owner.board[lane].filter((candidate) => candidate.instanceId !== unit.instanceId);
     owner.deathsThisTurn += 1;
     if (game.active === owner.id && lane === 1 && !owner.forestHealUsed[lane]) {
@@ -437,8 +600,8 @@
       }
       p.mana -= 2;
       p.heroPowerUsed = true;
-      if (power === 'healAlly') { unit.hp = Math.min(unit.maxHp + 2, unit.hp + 2); unit.maxHp += 2; log(`${unit.name} reçoit +2 PV.`); }
-      if (power === 'damageAlly') { unit.hp -= 2; removeDead(unit); log(`La Mèche ardente inflige 2 dégâts à ${unit.name}.`); }
+      if (power === 'healAlly') { queueUnitFloat(unit, '+2 PV', 'healing'); unit.hp = Math.min(unit.maxHp + 2, unit.hp + 2); unit.maxHp += 2; log(`${unit.name} reçoit +2 PV.`); }
+      if (power === 'damageAlly') { queueUnitFloat(unit, '−2', 'damage'); unit.hp -= 2; removeDead(unit); log(`La Mèche ardente inflige 2 dégâts à ${unit.name}.`); }
       game.pending = null;
       game.selection = null;
       checkVictory('le pouvoir de héros');
@@ -479,9 +642,16 @@
   function castSpellAtLane(card, lane, casterId = 'player') {
     const p = side(casterId);
     if (!canSummon(casterId, lane) && card.effect === 'spawnTwoSpell') { log(`Il n’y a plus de place aux ${laneLabel(lane)}.`, 'warn'); return; }
+    const sourceCard = casterId === 'player'
+      ? Array.from($('handRow').querySelectorAll('[data-card]')).find((element) => element.dataset.card === card.instanceId)
+      : null;
+    const cardClone = sourceCard?.cloneNode(true) || null;
+    const sourceRect = snapshotRect(sourceCard);
     if (!paySpell(p, card, lane)) return;
     const played = removeCardFromHand(p, card.instanceId);
     p.graveyard.push(played);
+    const place = Array.from($('locationsRow').querySelectorAll('[data-location]')).find((element) => Number(element.dataset.location) === lane);
+    game.visualEvents.push({ type: 'spell', lane, cardClone, sourceRect, targetRect: snapshotRect(place) });
     if (card.effect === 'spawnTwoSpell') {
       summonSpore(casterId, lane);
       summonSpore(casterId, lane);
@@ -501,18 +671,27 @@
       render();
       return;
     }
+    const sourceCard = casterId === 'player'
+      ? Array.from($('handRow').querySelectorAll('[data-card]')).find((element) => element.dataset.card === card.instanceId)
+      : null;
+    const cardClone = sourceCard?.cloneNode(true) || null;
+    const sourceRect = snapshotRect(sourceCard);
+    const targetRect = snapshotRect(unitElement(target.instanceId));
     if (!paySpell(p, card, lane)) return;
     p.graveyard.push(removeCardFromHand(p, card.instanceId));
     if (card.effect === 'protectAlly') {
+      queueUnitFloat(target, '+3 PV · GARDE', 'healing');
       target.maxHp += 3;
       target.hp = Math.min(target.maxHp, target.hp + 3);
       target.tempGuardUntil = p.turns + 1;
       log(`${target.name} reçoit +3 PV et Garde jusqu’à ton prochain tour.`);
     } else if (card.effect === 'deal3') {
+      queueUnitFloat(target, '−3', 'damage');
       target.hp -= 3;
       log(`${card.name} inflige 3 dégâts à ${target.name}.`);
       removeDead(target);
     }
+    game.visualEvents.push({ type: 'spell', lane, cardClone, sourceRect, targetRect });
     game.selection = null;
     game.pending = null;
     checkVictory(card.name);
@@ -547,6 +726,11 @@
     const guards = guardAt('enemy', attacker.lane);
     if (guards.length && !isGuarded(defender)) { log(`La Garde de ${guards[0].name} bloque ce lieu.`, 'warn'); return; }
     if (attacker.attacksThisTurn > 0 || (side('player').turns <= attacker.summonedTurn && !attacker.rush)) { log(`${attacker.name} n’est pas prêt à attaquer.`, 'warn'); return; }
+    game.visualEvents.push({
+      type: 'clash', attackerId: attacker.instanceId, defenderId: defender.instanceId, attackerOwner: attacker.owner,
+      lane: attacker.lane, attackerDamage: defender.attack, defenderDamage: attacker.attack,
+      attackerRect: snapshotRect(unitElement(attacker.instanceId)), defenderRect: snapshotRect(unitElement(defender.instanceId))
+    });
     const attackPower = attacker.attack;
     const counterPower = defender.attack;
     attacker.attacksThisTurn += 1;
@@ -570,6 +754,7 @@
     if (attacker.rush && p.turns <= attacker.summonedTurn) { log('Ruée permet d’attaquer un serviteur à l’arrivée, pas le héros.', 'warn'); return; }
     const guards = guardAt('enemy', attacker.lane);
     if (guards.length) { log(`${guards[0].name} garde ce lieu : attaque-le d’abord.`, 'warn'); return; }
+    game.visualEvents.push({ type: 'heroStrike', attackerId: attacker.instanceId, attackerOwner: attacker.owner });
     attacker.attacksThisTurn += 1;
     const damage = attacker.attack;
     damageHero('enemy', damage, attacker.name);
@@ -693,13 +878,15 @@
     p.mana -= cost;
     p.spellDiscountUsed[lane] = true;
     p.graveyard.push(removeCardFromHand(p, card.instanceId));
-    if (card.effect === 'deal3') { target.hp -= 3; removeDead(target); log(`Les ${p.faction.short} lancent ${card.name} sur ${target.name}.`); }
+    if (card.effect === 'deal3') { queueUnitFloat(target, '−3', 'damage'); target.hp -= 3; removeDead(target); log(`Les ${p.faction.short} lancent ${card.name} sur ${target.name}.`); }
     else if (card.effect === 'protectAlly') {
+      queueUnitFloat(target, '+3 PV · GARDE', 'healing');
       target.maxHp += 3;
       target.hp = Math.min(target.maxHp, target.hp + 3);
       target.tempGuardUntil = p.turns + 1;
       log(`Les ${p.faction.short} protègent ${target.name} avec ${card.name}.`);
     }
+    game.visualEvents.push({ type: 'spell', lane });
     return true;
   }
 
@@ -710,7 +897,7 @@
     if (effect === 'damageAlly') {
       const target = side('player').board.flat().sort((a, b) => a.hp - b.hp || b.attack - a.attack)[0];
       if (!target) return;
-      p.mana -= 2; p.heroPowerUsed = true; target.hp -= 2; removeDead(target);
+      p.mana -= 2; p.heroPowerUsed = true; queueUnitFloat(target, '−2', 'damage'); target.hp -= 2; removeDead(target);
       log(`La Mèche ardente frappe ${target.name}.`);
     } else if (effect === 'healAlly') {
       const target = p.board.flat().filter((u) => u.hp < u.maxHp + 2).sort((a, b) => (a.hp / a.maxHp) - (b.hp / b.maxHp))[0];
@@ -741,11 +928,17 @@
         : targets.filter((unit) => unit.hp <= attacker.attack).sort((a, b) => a.hp - b.hp || b.attack - a.attack)[0];
       if (target) {
         const atk = attacker.attack; const counter = target.attack;
+        game.visualEvents.push({
+          type: 'clash', attackerId: attacker.instanceId, defenderId: target.instanceId, attackerOwner: attacker.owner,
+          lane: attacker.lane, attackerDamage: counter, defenderDamage: atk,
+          attackerRect: snapshotRect(unitElement(attacker.instanceId)), defenderRect: snapshotRect(unitElement(target.instanceId))
+        });
         attacker.attacksThisTurn += 1; target.hp -= atk; attacker.hp -= counter;
         removeDead(target); removeDead(attacker);
         log(`${attacker.name} affronte ${target.name} aux ${laneLabel(attacker.lane)}.`);
       } else if (!guards.length && !(attacker.rush && enemy.turns <= attacker.summonedTurn)) {
         attacker.attacksThisTurn += 1;
+        game.visualEvents.push({ type: 'heroStrike', attackerId: attacker.instanceId, attackerOwner: attacker.owner });
         damageHero('player', attacker.attack, attacker.name);
         log(`${attacker.name} frappe ton héros pour ${attacker.attack} dégâts.`);
       }
@@ -958,7 +1151,21 @@
         <span class="card-art">${spriteImage(card, 'card-sprite')}<span class="card-cost">${card.cost}</span><span class="card-ribbon">${card.type}</span></span><span class="card-name">${card.name}</span><span class="card-text">${card.text}</span><span class="card-bottom">${faction.short}</span>${stats}
       </button>`;
     }).join('');
-    row.querySelectorAll('[data-card]').forEach((button) => button.addEventListener('click', () => selectCard(button.dataset.card)));
+    row.querySelectorAll('[data-card]').forEach((button) => {
+      button.addEventListener('click', () => selectCard(button.dataset.card));
+      button.addEventListener('pointermove', (event) => {
+        if (event.pointerType === 'touch') return;
+        const rect = button.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width - 0.5;
+        const y = (event.clientY - rect.top) / rect.height - 0.5;
+        button.style.setProperty('--tilt-x', `${x * 9}deg`);
+        button.style.setProperty('--tilt-y', `${y * -7}deg`);
+      });
+      button.addEventListener('pointerleave', () => {
+        button.style.removeProperty('--tilt-x');
+        button.style.removeProperty('--tilt-y');
+      });
+    });
   }
 
   function updateHint() {
@@ -998,6 +1205,7 @@
     renderLocations();
     renderHand();
     updateHint();
+    runVisualEvents();
   }
 
   function showOverlay(kicker, title, html, actions = []) {
@@ -1119,4 +1327,3 @@
   renderFactions();
   renderEvents();
 })();
-
